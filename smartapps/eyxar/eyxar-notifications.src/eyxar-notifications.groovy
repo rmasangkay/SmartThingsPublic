@@ -14,7 +14,7 @@ definition(
 preferences {
      section("EyXAr Auto Notifications - For Voice Notification, Install the app 'FOR ST' in Google Play")
       {
-        input "door", "capability.contactSensor", title: "Select Door/Contact", required: false, multiple: true
+        input "door", "capability.contactSensor", title: "Monitor Door/Contact When Nobody's Home", required: false, multiple: true
     }   
 
     section("Send Notifications by Text or use below option?") {
@@ -38,10 +38,9 @@ preferences {
 
 def installed() {
     initialize()
-/* Presense */     
+
     subscribe(door, "contact.open", doorOpenHandler)
     subscribe(door, "contact.closed", doorClosedHandler)
-    subscribe(presence, "presence", myHandler)
     subscribe(presence, "presence", presenceHandler)
 }
 
@@ -52,28 +51,37 @@ def updated() {
 def initialize() {
     subscribe(door, "contact.open", doorOpenHandler)
     subscribe(door, "contact.closed", doorClosedHandler)
-    subscribe(presence, "presence", myHandler)
     subscribe(presence, "presence", presenceHandler)
     
 }
 
+/* Notification is only send when Nobody's detected based on the device presence selection*/   
+
 def doorOpenHandler(evt) {
-    def message = "EyXAr Detected the ${evt.displayName} is ${evt.value}!"
-    if (sendPush) {
-        sendPush(message)
-    }
-    if (phone) {
-        sendSms(phone, message)
+
+    def nobodyHome = presence.find{it.currentPresence == "present"} == null
+        if (nobodyHome) {
+        def message = "EyXAr Detected the ${evt.displayName} is ${evt.value}!"
+            if (sendPush) {
+                sendPush(message)
+         }
+            if (phone) {
+                sendSms(phone, message)
+        }
     }
 }
 
 def doorClosedHandler(evt) {
-    def message = "EyXAr Detected the ${evt.displayName} is ${evt.value}!"
-    if (sendPush) {
-        sendPush(message)
-    }
-    if (phone) {
-        sendSms(phone, message)
+
+    def nobodyHome = presence.find{it.currentPresence == "present"} == null
+        if (nobodyHome) {
+        def message = "EyXAr Detected the ${evt.displayName} is ${evt.value}!"
+            if (sendPush) {
+                sendPush(message)
+        }
+            if (phone) {
+                sendSms(phone, message)
+        }
     }
 }
 
@@ -88,17 +96,7 @@ def contactHandler(evt) {
     log.debug "Contact is in ${evt.value} state"
 }
 
-/* Presense */  
-def myHandler(evt) {
-  if("present" == evt.value)
-    def message = "EyXAr Detected ${evt.displayName} is ${evt.value}!"
-    if (sendPush) {
-        sendPush(message)
-    }
-    if (phone) {
-        sendSms(phone, message)
-    }
-}
+/* For Mobile Presense Handler */  
 
 def presenceHandler(evt) {
 
@@ -113,5 +111,6 @@ def presenceHandler(evt) {
 
     }
 }
+
 
 
